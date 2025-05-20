@@ -1,0 +1,17 @@
+This diagram represents our basic AWS network architecture.
+
+
+VPC: nba-network-vpc
+|
+|-- Public Subnet: nba-public-subnet-1
+|   |-- Internet Gateway
+|   |-- NAT Gateway
+|   |-- Bastion Host
+|
+|-- Private Subnet: nba-private-subnet-1
+|   |-- Application Servers
+|   |-- Database Servers
+|
+|-- Route Tables
+|-- Security Groups
+|-- Network ACLs
