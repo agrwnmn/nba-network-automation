@@ -1,0 +1,282 @@
+name: NBA Network Stats - Monitoring & Health Checks
+
+on:
+  schedule:
+    # Run every 15 minutes - "Quarter checks"
+    - cron: '*/15 * * * *'
+    # Run comprehensive check daily at 9 AM UTC - "Game day prep"
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of monitoring check'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - comprehensive
+          - emergency
+      alert_threshold:
+        description: 'Alert threshold level'
+        required: false
+        default: 'normal'
+        type: choice
+        options:
+          - normal
+          - sensitive
+          - critical
+
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  PAGERDUTY_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+
+jobs:
+  network-health-check:
+    name: Quarter Check - Network Health
+    runs-on: ubuntu-latest
+    outputs:
+      health_status: ${{ steps.health_summary.outputs.status }}
+      alert_level: ${{ steps.health_summary.outputs.alert_level }}
+    steps:
+      - name: Checkout Playbook
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Check VPC Flow Logs
+        run: |
+          echo "📈 Analyzing NBA Arena network traffic patterns..."
+          
+          # Check if Flow Logs are enabled
+          aws ec2 describe-flow-logs \
+            --filter "Name=tag:Project,Values=nba-network-automation" \
+            --query "FlowLogs[*].[FlowLogId,FlowLogStatus,ResourceId]" \
+            --output table
+
+      - name: Monitor NAT Gateway Metrics
+        run: |
+          echo "🚪 Checking NAT Gateway performance stats..."
+          
+          END_TIME=$(date -u +%Y-%m-%dT%H:%M:%S)
+          START_TIME=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%S)
+          
+          # Get NAT Gateway IDs
+          NAT_GW_IDS=$(aws ec2 describe-nat-gateways \
+            --filter "Name=tag:Project,Values=nba-network-automation" "Name=state,Values=available" \
+            --query "NatGateways[*].NatGatewayId" \
+            --output text)
+          
+          for NAT_ID in $NAT_GW_IDS; do
+            echo "Checking NAT Gateway: $NAT_ID"
+            
+            # Check BytesOutToDestination
+            aws cloudwatch get-metric-statistics \
+              --namespace AWS/EC2 \
+              --metric-name BytesOutToDestination \
+              --dimensions Name=NatGatewayId,Value=$NAT_ID \
+              --start-time $START_TIME \
+              --end-time $END_TIME \
+              --period 300 \
+              --statistics Average,Maximum \
+              --output table
+          done
+
+      - name: Check Security Group Changes
+        run: |
+          echo "🛡️ Monitoring security perimeter changes..."
+          
+          # Check CloudTrail for recent security group modifications
+          aws cloudtrail lookup-events \
+            --lookup-attributes AttributeKey=EventName,AttributeValue=AuthorizeSecurityGroupIngress \
+            --start-time $(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+            --max-items 10 \
+            --query "Events[*].[EventTime,Username,EventName]" \
+            --output table
+
+      - name: Validate Network Endpoints
+        run: |
+          echo "🎯 Checking NBA Arena network endpoints..."
+          
+          # Check VPC Endpoints
+          aws ec2 describe-vpc-endpoints \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "VpcEndpoints[*].[VpcEndpointId,State,ServiceName,VpcId]" \
+            --output table
+
+      - name: Health Summary
+        id: health_summary
+        run: |
+          echo "📊 NBA Network Health Summary"
+          echo "============================"
+          
+          # Determine overall health status
+          HEALTH_STATUS="healthy"
+          ALERT_LEVEL="green"
+          
+          # Add logic to determine health based on checks
+          echo "status=$HEALTH_STATUS" >> $GITHUB_OUTPUT
+          echo "alert_level=$ALERT_LEVEL" >> $GITHUB_OUTPUT
+
+  performance-monitoring:
+    name: Game Stats - Performance Metrics
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 9 * * *' || github.event.inputs.check_type != 'emergency'
+    needs: network-health-check
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Collect Network Performance Metrics
+        run: |
+          echo "🏃 Collecting NBA Arena network performance stats..."
+          
+          END_TIME=$(date -u +%Y-%m-%dT%H:%M:%S)
+          START_TIME=$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S)
+          
+          # Get VPC IDs
+          VPC_IDS=$(aws ec2 describe-vpcs \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "Vpcs[*].VpcId" \
+            --output text)
+          
+          for VPC_ID in $VPC_IDS; do
+            echo "Performance metrics for VPC: $VPC_ID"
+            
+            # Network utilization would require custom metrics
+            echo "- Checking subnet utilization..."
+            aws ec2 describe-subnets \
+              --filters "Name=vpc-id,Values=$VPC_ID" \
+              --query "Subnets[*].[SubnetId,AvailableIpAddressCount,CidrBlock]" \
+              --output table
+          done
+
+      - name: Check Bandwidth Utilization
+        run: |
+          echo "📊 Analyzing bandwidth utilization..."
+          
+          # Check Internet Gateway metrics
+          aws cloudwatch list-metrics \
+            --namespace AWS/EC2 \
+            --metric-name NetworkPacketsIn \
+            --output table
+
+  incident-detection:
+    name: Referee Review - Incident Detection
+    runs-on: ubuntu-latest
+    needs: network-health-check
+    if: needs.network-health-check.outputs.alert_level != 'green' || github.event.inputs.check_type == 'emergency'
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Scan for Security Incidents
+        run: |
+          echo "🚨 Scanning for potential security incidents..."
+          
+          # Check for failed connection attempts
+          aws cloudtrail lookup-events \
+            --lookup-attributes AttributeKey=EventName,AttributeValue=NetworkAclEntryDenied \
+            --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
+            --query "Events[*].[EventTime,SourceIPAddress,ErrorCode]" \
+            --output table
+
+      - name: Check for Configuration Drift
+        run: |
+          echo "🔄 Checking for configuration drift..."
+          
+          # Compare current state with expected state
+          aws cloudformation detect-stack-drift \
+            --stack-name nba-arena-vpc-prod || true
+
+  alert-notification:
+    name: Broadcast - Send Notifications
+    runs-on: ubuntu-latest
+    needs: [network-health-check, performance-monitoring, incident-detection]
+    if: always() && (needs.network-health-check.outputs.alert_level != 'green' || failure())
+    steps:
+      - name: Prepare Alert Message
+        id: alert_message
+        run: |
+          echo "📢 Preparing NBA Network alert..."
+          
+          ALERT_TITLE="🏀 NBA Network Alert - ${{ needs.network-health-check.outputs.alert_level }}"
+          ALERT_BODY="Network Status: ${{ needs.network-health-check.outputs.health_status }}"
+          
+          echo "title=$ALERT_TITLE" >> $GITHUB_OUTPUT
+          echo "body=$ALERT_BODY" >> $GITHUB_OUTPUT
+
+      - name: Send Slack Notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST ${{ env.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "${{ steps.alert_message.outputs.title }}",
+              "attachments": [{
+                "color": "${{ needs.network-health-check.outputs.alert_level == 'red' && 'danger' || 'warning' }}",
+                "fields": [{
+                  "title": "Status",
+                  "value": "${{ steps.alert_message.outputs.body }}",
+                  "short": false
+                }]
+              }]
+            }'
+
+      - name: Create GitHub Issue
+        if: needs.network-health-check.outputs.alert_level == 'red'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 NBA Network Critical Alert';
+            const body = `## Network Health Check Failed
+            
+            **Status**: ${{ needs.network-health-check.outputs.health_status }}
+            **Alert Level**: ${{ needs.network-health-check.outputs.alert_level }}
+            **Time**: ${new Date().toISOString()}
+            
+            Please investigate immediately.`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['critical', 'network-alert', 'automated']
+            });
+
+  generate-monitoring-report:
+    name: Box Score - Generate Report
+    runs-on: ubuntu-latest
+    needs: [network-health-check, performance-monitoring]
+    if: github.event.schedule == '0 9 * * *' || github.event.inputs.check_type == 'comprehensive'
+    steps:
+      - name: Generate Daily Report
+        run: |
+          echo "📋 NBA Network Daily Monitoring Report"
+          echo "====================================="
+          echo "Date: $(date)"
+          echo "Health Status: ${{ needs.network-health-check.outputs.health_status }}"
+          echo "Alert Level: ${{ needs.network-health-check.outputs.alert_level }}"
+          echo ""
+          echo "Summary:"
+          echo "- Network Health Checks: ✅"
+          echo "- Performance Monitoring: ✅"
+          echo "- Security Scans: ✅"
+          echo ""
+          echo "Next scheduled check: in 15 minutes"

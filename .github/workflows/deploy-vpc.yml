@@ -1,0 +1,138 @@
+name: NBA Arena Network - Deploy VPC Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cloudformation/vpc/**'
+      - '.github/workflows/deploy-vpc.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment (dev/staging/prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      region:
+        description: 'AWS Region for deployment'
+        required: true
+        default: 'us-east-1'
+        type: choice
+        options:
+          - us-east-1
+          - us-west-2
+          - eu-west-1
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-cloudformation:
+    name: Pre-Game Validation - CloudFormation Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Playbook
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-1' }}
+
+      - name: Validate CloudFormation Templates
+        run: |
+          echo "🏀 Validating NBA Arena Network CloudFormation templates..."
+          for template in cloudformation/vpc/*.yml cloudformation/vpc/*.yaml; do
+            if [ -f "$template" ]; then
+              echo "Checking: $template"
+              aws cloudformation validate-template --template-body file://$template
+            fi
+          done
+
+      - name: Run cfn-lint
+        uses: scottbrenner/cfn-lint-action@v2
+        with:
+          args: "cloudformation/vpc/"
+
+  deploy-vpc-stack:
+    name: Game Time - Deploy VPC Infrastructure
+    needs: validate-cloudformation
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Checkout Playbook
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-1' }}
+
+      - name: Deploy VPC Stack
+        run: |
+          STACK_NAME="nba-arena-vpc-${{ github.event.inputs.environment || 'dev' }}"
+          TEMPLATE_FILE="cloudformation/vpc/vpc-main.yml"
+          
+          echo "🏟️ Deploying NBA Arena Network VPC: $STACK_NAME"
+          
+          aws cloudformation deploy \
+            --stack-name $STACK_NAME \
+            --template-file $TEMPLATE_FILE \
+            --parameter-overrides \
+              EnvironmentName=${{ github.event.inputs.environment || 'dev' }} \
+              ProjectName=nba-arena-network \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --tags \
+              Project=nba-network-automation \
+              Environment=${{ github.event.inputs.environment || 'dev' }} \
+              ManagedBy=github-actions \
+              Team=nba-network-ops
+
+      - name: Capture Stack Outputs
+        run: |
+          STACK_NAME="nba-arena-vpc-${{ github.event.inputs.environment || 'dev' }}"
+          echo "📊 NBA Arena Network Statistics:"
+          aws cloudformation describe-stacks \
+            --stack-name $STACK_NAME \
+            --query "Stacks[0].Outputs[*].[OutputKey,OutputValue]" \
+            --output table
+
+  post-deployment-validation:
+    name: Post-Game Analysis - Validate Deployment
+    needs: deploy-vpc-stack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-1' }}
+
+      - name: Validate VPC Resources
+        run: |
+          echo "🔍 Validating NBA Arena Network Resources..."
+          
+          # Check VPC
+          aws ec2 describe-vpcs --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "Vpcs[*].[VpcId,CidrBlock,Tags[?Key=='Name'].Value|[0]]" \
+            --output table
+          
+          # Check Subnets
+          aws ec2 describe-subnets --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "Subnets[*].[SubnetId,CidrBlock,AvailabilityZone]" \
+            --output table
+
+      - name: Send Deployment Notification
+        if: always()
+        run: |
+          echo "📢 NBA Arena Network deployment completed!"
+          echo "Environment: ${{ github.event.inputs.environment || 'dev' }}"
+          echo "Region: ${{ github.event.inputs.region || 'us-east-1' }}"
