@@ -1,0 +1,191 @@
+name: NBA Network Playbook - Configuration Validation
+
+on:
+  pull_request:
+    paths:
+      - 'network-configs/**'
+      - 'cloudformation/**'
+      - '.github/workflows/network-validation.yml'
+  push:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Run daily at 6 AM UTC (1 AM EST) - "Morning Shootaround"
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      validation_scope:
+        description: 'Validation scope'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - configs-only
+          - security-only
+          - connectivity-only
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  configuration-syntax-check:
+    name: Pre-Game Warmup - Syntax Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Playbook
+        uses: actions/checkout@v4
+
+      - name: Setup Python Court
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Validation Tools
+        run: |
+          pip install yamllint jsonlint netaddr ipaddress
+          pip install boto3 pytest pytest-cov
+
+      - name: Validate YAML Configurations
+        run: |
+          echo "🏀 Checking YAML playbook syntax..."
+          yamllint -c .yamllint network-configs/ || true
+
+      - name: Validate JSON Configurations
+        run: |
+          echo "📋 Checking JSON configuration syntax..."
+          find network-configs -name "*.json" -exec jsonlint {} \;
+
+      - name: Validate IP Addressing
+        run: |
+          echo "🌐 Validating NBA Arena Network addressing..."
+          python scripts/validate_ip_ranges.py
+
+  security-compliance-check:
+    name: Defense Check - Security Validation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validation_scope != 'configs-only'
+    steps:
+      - name: Checkout Playbook
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Run Security Group Audit
+        run: |
+          echo "🛡️ Auditing NBA Arena security perimeter..."
+          
+          # Check for overly permissive security groups
+          aws ec2 describe-security-groups \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "SecurityGroups[?IpPermissions[?IpRanges[?CidrIp=='0.0.0.0/0']]].[GroupId,GroupName,Description]" \
+            --output table
+
+      - name: Check NACLs Configuration
+        run: |
+          echo "🚧 Checking Network ACLs defense..."
+          
+          aws ec2 describe-network-acls \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "NetworkAcls[*].[NetworkAclId,VpcId,Entries[?RuleAction=='allow' && CidrBlock=='0.0.0.0/0']]" \
+            --output json
+
+      - name: Validate Route Tables
+        run: |
+          echo "🗺️ Validating routing playbook..."
+          
+          aws ec2 describe-route-tables \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "RouteTables[*].[RouteTableId,VpcId,Routes[?DestinationCidrBlock=='0.0.0.0/0'].GatewayId]" \
+            --output table
+
+  network-connectivity-test:
+    name: Game Time - Connectivity Testing
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validation_scope == 'full' || github.event.inputs.validation_scope == 'connectivity-only'
+    steps:
+      - name: Checkout Playbook
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Test VPC Peering Connections
+        run: |
+          echo "🤝 Testing NBA Arena interconnections..."
+          
+          aws ec2 describe-vpc-peering-connections \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "VpcPeeringConnections[*].[VpcPeeringConnectionId,Status.Code,RequesterVpcInfo.VpcId,AccepterVpcInfo.VpcId]" \
+            --output table
+
+      - name: Validate Internet Gateway Connectivity
+        run: |
+          echo "🌍 Testing arena internet connectivity..."
+          
+          aws ec2 describe-internet-gateways \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query "InternetGateways[*].[InternetGatewayId,Attachments[0].VpcId,Attachments[0].State]" \
+            --output table
+
+      - name: Check NAT Gateway Health
+        run: |
+          echo "🚪 Checking NAT Gateway performance..."
+          
+          aws ec2 describe-nat-gateways \
+            --filter "Name=tag:Project,Values=nba-network-automation" \
+            --query "NatGateways[*].[NatGatewayId,State,VpcId,SubnetId]" \
+            --output table
+
+  generate-validation-report:
+    name: Post-Game Report - Generate Summary
+    needs: [configuration-syntax-check, security-compliance-check, network-connectivity-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Playbook
+        uses: actions/checkout@v4
+
+      - name: Generate Validation Report
+        run: |
+          echo "📊 NBA Network Validation Report"
+          echo "================================"
+          echo "Date: $(date)"
+          echo "Branch: ${{ github.ref }}"
+          echo "Validation Scope: ${{ github.event.inputs.validation_scope || 'full' }}"
+          echo ""
+          echo "✅ Configuration Syntax: ${{ needs.configuration-syntax-check.result }}"
+          echo "🛡️ Security Compliance: ${{ needs.security-compliance-check.result }}"
+          echo "🌐 Network Connectivity: ${{ needs.network-connectivity-test.result }}"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `### 🏀 NBA Network Validation Results
+            
+            | Check | Status |
+            |-------|--------|
+            | Configuration Syntax | ${{ needs.configuration-syntax-check.result }} |
+            | Security Compliance | ${{ needs.security-compliance-check.result }} |
+            | Network Connectivity | ${{ needs.network-connectivity-test.result }} |
+            
+            *Validation completed at: ${new Date().toISOString()}*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
