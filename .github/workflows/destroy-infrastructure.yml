@@ -1,0 +1,233 @@
+name: 🗑️ NBA Arena Network - Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '🏟️ Environment to destroy (BE CAREFUL!)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: dev
+      region:
+        description: '🌎 AWS Region'
+        required: true
+        type: choice
+        options:
+          - us-east-1
+          - us-west-2
+          - eu-west-1
+          - eu-central-1
+        default: us-east-1
+      confirm_destruction:
+        description: '⚠️ Type "DESTROY" to confirm (case-sensitive)'
+        required: true
+        type: string
+      stack_name:
+        description: '📋 Specific stack name (leave empty for default)'
+        required: false
+        type: string
+
+concurrency:
+  group: destroy-${{ github.event.inputs.environment }}-${{ github.event.inputs.region }}
+  cancel-in-progress: false
+
+jobs:
+  validate-destruction:
+    name: 🔍 Pre-Destruction Validation
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.validate.outputs.proceed }}
+      stack_name: ${{ steps.determine_stack.outputs.stack_name }}
+    steps:
+      - name: Validate Destruction Confirmation
+        id: validate
+        run: |
+          if [ "${{ github.event.inputs.confirm_destruction }}" != "DESTROY" ]; then
+            echo "❌ Destruction NOT confirmed. You must type 'DESTROY' exactly."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ Destruction confirmed"
+            echo "proceed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine Stack Name
+        id: determine_stack
+        run: |
+          if [ -n "${{ github.event.inputs.stack_name }}" ]; then
+            STACK_NAME="${{ github.event.inputs.stack_name }}"
+          else
+            STACK_NAME="nba-arena-vpc-${{ github.event.inputs.environment }}"
+          fi
+          echo "Stack to destroy: $STACK_NAME"
+          echo "stack_name=$STACK_NAME" >> $GITHUB_OUTPUT
+
+  list-resources:
+    name: 📊 List Resources to be Destroyed
+    needs: validate-destruction
+    if: needs.validate-destruction.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region }}
+
+      - name: Check Stack Status
+        run: |
+          STACK_NAME="${{ needs.validate-destruction.outputs.stack_name }}"
+          echo "🔍 Checking stack: $STACK_NAME"
+          
+          # Check if stack exists
+          if aws cloudformation describe-stacks --stack-name $STACK_NAME 2>/dev/null; then
+            echo "✅ Stack found"
+            
+            echo "📋 Stack Details:"
+            aws cloudformation describe-stacks \
+              --stack-name $STACK_NAME \
+              --query 'Stacks[0].[StackName,StackStatus,CreationTime]' \
+              --output table
+            
+            echo -e "\n🏗️ Resources to be destroyed:"
+            aws cloudformation describe-stack-resources \
+              --stack-name $STACK_NAME \
+              --query 'StackResources[*].[LogicalResourceId,ResourceType,PhysicalResourceId]' \
+              --output table
+          else
+            echo "❌ Stack $STACK_NAME not found in region ${{ github.event.inputs.region }}"
+            exit 1
+          fi
+
+      - name: Check for Dependent Resources
+        run: |
+          STACK_NAME="${{ needs.validate-destruction.outputs.stack_name }}"
+          VPC_ID=$(aws cloudformation describe-stack-resources \
+            --stack-name $STACK_NAME \
+            --query 'StackResources[?ResourceType==`AWS::EC2::VPC`].PhysicalResourceId' \
+            --output text || echo "")
+          
+          if [ -n "$VPC_ID" ]; then
+            echo "🔍 Checking for resources in VPC: $VPC_ID"
+            
+            # Check for EC2 instances
+            INSTANCES=$(aws ec2 describe-instances \
+              --filters "Name=vpc-id,Values=$VPC_ID" \
+              --query 'Reservations[*].Instances[*].InstanceId' \
+              --output text || echo "")
+            
+            if [ -n "$INSTANCES" ]; then
+              echo "⚠️ WARNING: Found EC2 instances in the VPC that must be terminated first:"
+              echo "$INSTANCES"
+            fi
+            
+            # Check for RDS instances
+            echo "🔍 Checking for RDS instances..."
+            aws rds describe-db-instances \
+              --query "DBInstances[?DBSubnetGroup.VpcId=='$VPC_ID'].[DBInstanceIdentifier,DBInstanceStatus]" \
+              --output table 2>/dev/null || echo "No RDS instances found"
+          fi
+
+  destroy-infrastructure:
+    name: 💥 Destroy Infrastructure
+    needs: [validate-destruction, list-resources]
+    if: needs.validate-destruction.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}-destroy
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region }}
+
+      - name: Create Backup of Stack Template
+        run: |
+          STACK_NAME="${{ needs.validate-destruction.outputs.stack_name }}"
+          echo "📸 Creating backup of stack template..."
+          
+          # Get stack template
+          aws cloudformation get-template \
+            --stack-name $STACK_NAME \
+            --query 'TemplateBody' > ${STACK_NAME}-backup-$(date +%Y%m%d-%H%M%S).json
+          
+          # Get stack parameters
+          aws cloudformation describe-stacks \
+            --stack-name $STACK_NAME \
+            --query 'Stacks[0].Parameters' > ${STACK_NAME}-params-backup-$(date +%Y%m%d-%H%M%S).json
+          
+          echo "✅ Backup created"
+
+      - name: Delete CloudFormation Stack
+        run: |
+          STACK_NAME="${{ needs.validate-destruction.outputs.stack_name }}"
+          echo "🗑️ Initiating destruction of stack: $STACK_NAME"
+          
+          # Delete the stack
+          aws cloudformation delete-stack --stack-name $STACK_NAME
+          
+          echo "⏳ Waiting for stack deletion to complete..."
+          
+          # Wait for deletion with timeout of 30 minutes
+          if aws cloudformation wait stack-delete-complete \
+            --stack-name $STACK_NAME \
+            --no-cli-pager 2>&1 | tee deletion.log; then
+            echo "✅ Stack deleted successfully!"
+          else
+            echo "❌ Stack deletion failed or timed out. Check AWS Console for details."
+            cat deletion.log
+            exit 1
+          fi
+
+      - name: Verify Deletion
+        run: |
+          STACK_NAME="${{ needs.validate-destruction.outputs.stack_name }}"
+          echo "🔍 Verifying stack deletion..."
+          
+          # Check if stack still exists
+          if aws cloudformation describe-stacks --stack-name $STACK_NAME 2>/dev/null; then
+            echo "❌ Stack still exists! Manual intervention may be required."
+            exit 1
+          else
+            echo "✅ Stack successfully deleted"
+          fi
+
+      - name: Clean Up Remaining Resources
+        run: |
+          echo "🧹 Checking for any remaining resources..."
+          
+          # List any remaining CloudFormation stacks with our tags
+          echo "📋 Remaining NBA Network stacks in region:"
+          aws cloudformation describe-stacks \
+            --query 'Stacks[?Tags[?Key==`Project` && Value==`nba-network-automation`]].[StackName,StackStatus]' \
+            --output table || echo "No other NBA Network stacks found"
+
+  destruction-summary:
+    name: 📝 Destruction Summary
+    needs: [validate-destruction, destroy-infrastructure]
+    if: always() && needs.validate-destruction.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🗑️ Infrastructure Destruction Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: ${{ github.event.inputs.region }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Stack**: ${{ needs.validate-destruction.outputs.stack_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.destroy-infrastructure.result }}" == "success" ]; then
+            echo "### ✅ Status: Successfully Destroyed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Status: Destruction Failed" >> $GITHUB_STEP_SUMMARY
+            echo "Check the logs for details." >> $GITHUB_STEP_SUMMARY
+          fi

@@ -193,11 +193,28 @@ on:
 ```
 
 ### 🎮 Manual Workflow Triggers (Coach's Call)
+
+#### Deploy Infrastructure
 ```bash
-# Trigger workflow manually (Timeout play)
+# Deploy VPC infrastructure
 gh workflow run deploy-vpc.yml \
-  --field team_name="Warriors" \
-  --field environment="finals"
+  --field environment="dev" \
+  --field region="us-east-1"
+```
+
+#### Destroy Infrastructure (Season's End)
+```bash
+# Destroy specific stack (BE CAREFUL!)
+gh workflow run destroy-infrastructure.yml \
+  --field environment="dev" \
+  --field region="us-east-1" \
+  --field confirm_destruction="DESTROY"
+
+# Cleanup all test resources
+gh workflow run cleanup-all-resources.yml \
+  --field cleanup_type="test-resources" \
+  --field region="us-east-1" \
+  --field dry_run="true"  # Set to false to actually delete
 ```
 
 ## 🤝 Contributing Guidelines - Join the Team!

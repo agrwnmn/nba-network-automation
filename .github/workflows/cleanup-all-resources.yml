@@ -1,0 +1,248 @@
+name: 🧹 NBA Network - Full Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      cleanup_type:
+        description: '🎯 What to clean up'
+        required: true
+        type: choice
+        options:
+          - all-stacks
+          - orphaned-resources
+          - specific-stack
+          - test-resources
+        default: test-resources
+      region:
+        description: '🌎 AWS Region (or "all" for all regions)'
+        required: true
+        type: string
+        default: us-east-1
+      dry_run:
+        description: '🔍 Dry run (only list, don\'t delete)'
+        required: true
+        type: boolean
+        default: true
+      confirm_cleanup:
+        description: '⚠️ Type "CLEANUP" to confirm (not needed for dry run)'
+        required: false
+        type: string
+
+jobs:
+  validate-cleanup:
+    name: 🔐 Validate Cleanup Request
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.validate.outputs.proceed }}
+      regions: ${{ steps.determine_regions.outputs.regions }}
+    steps:
+      - name: Validate Confirmation
+        id: validate
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            echo "✅ Dry run mode - proceeding without confirmation"
+            echo "proceed=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.confirm_cleanup }}" == "CLEANUP" ]; then
+            echo "✅ Cleanup confirmed"
+            echo "proceed=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Cleanup NOT confirmed. Type 'CLEANUP' to proceed (or enable dry run)"
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Determine Regions
+        id: determine_regions
+        run: |
+          if [ "${{ github.event.inputs.region }}" == "all" ]; then
+            # List of common regions where resources might exist
+            REGIONS='["us-east-1", "us-west-2", "eu-west-1", "eu-central-1"]'
+          else
+            REGIONS='["${{ github.event.inputs.region }}"]'
+          fi
+          echo "regions=$REGIONS" >> $GITHUB_OUTPUT
+          echo "Will check regions: $REGIONS"
+
+  scan-resources:
+    name: 🔍 Scan for Resources
+    needs: validate-cleanup
+    if: needs.validate-cleanup.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: ${{ fromJson(needs.validate-cleanup.outputs.regions) }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ matrix.region }}
+
+      - name: Scan CloudFormation Stacks
+        if: github.event.inputs.cleanup_type == 'all-stacks' || github.event.inputs.cleanup_type == 'test-resources'
+        run: |
+          echo "🏟️ Scanning CloudFormation stacks in ${{ matrix.region }}..."
+          
+          # Find all NBA Network stacks
+          STACKS=$(aws cloudformation describe-stacks \
+            --query 'Stacks[?Tags[?Key==`Project` && Value==`nba-network-automation`] || contains(StackName, `nba-arena`)].[StackName,StackStatus,CreationTime]' \
+            --output json || echo "[]")
+          
+          if [ "$STACKS" != "[]" ]; then
+            echo "Found NBA Network stacks:"
+            echo "$STACKS" | jq -r '.[] | "- \(.[0]) (Status: \(.[1]), Created: \(.[2]))"'
+            
+            # Save for cleanup job
+            echo "$STACKS" > stacks-${{ matrix.region }}.json
+          else
+            echo "No NBA Network stacks found in ${{ matrix.region }}"
+          fi
+
+      - name: Scan for Orphaned Resources
+        if: github.event.inputs.cleanup_type == 'orphaned-resources' || github.event.inputs.cleanup_type == 'all-stacks'
+        run: |
+          echo "🔍 Scanning for orphaned resources in ${{ matrix.region }}..."
+          
+          # Check for tagged resources not in CloudFormation
+          echo "📌 Checking EC2 instances..."
+          aws ec2 describe-instances \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query 'Reservations[*].Instances[?State.Name!=`terminated`].[InstanceId,State.Name,Tags[?Key==`aws:cloudformation:stack-name`].Value|[0]]' \
+            --output json > instances-${{ matrix.region }}.json || echo "[]" > instances-${{ matrix.region }}.json
+          
+          echo "🔐 Checking security groups..."
+          aws ec2 describe-security-groups \
+            --filters "Name=tag:Project,Values=nba-network-automation" \
+            --query 'SecurityGroups[?Tags[?Key==`aws:cloudformation:stack-name`].Value==null].[GroupId,GroupName]' \
+            --output json > sgs-${{ matrix.region }}.json || echo "[]" > sgs-${{ matrix.region }}.json
+          
+          # Display findings
+          ORPHANED_INSTANCES=$(cat instances-${{ matrix.region }}.json | jq -r 'flatten | map(select(.[2] == null)) | length')
+          ORPHANED_SGS=$(cat sgs-${{ matrix.region }}.json | jq -r 'length')
+          
+          echo "Summary for ${{ matrix.region }}:"
+          echo "- Orphaned EC2 instances: $ORPHANED_INSTANCES"
+          echo "- Orphaned security groups: $ORPHANED_SGS"
+
+      - name: Upload Scan Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-results-${{ matrix.region }}
+          path: |
+            stacks-${{ matrix.region }}.json
+            instances-${{ matrix.region }}.json
+            sgs-${{ matrix.region }}.json
+
+  cleanup-resources:
+    name: 🧹 Cleanup Resources
+    needs: [validate-cleanup, scan-resources]
+    if: needs.validate-cleanup.outputs.proceed == 'true' && github.event.inputs.dry_run == 'false'
+    runs-on: ubuntu-latest
+    environment: production-cleanup
+    strategy:
+      matrix:
+        region: ${{ fromJson(needs.validate-cleanup.outputs.regions) }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ matrix.region }}
+
+      - name: Download Scan Results
+        uses: actions/download-artifact@v4
+        with:
+          name: scan-results-${{ matrix.region }}
+
+      - name: Cleanup CloudFormation Stacks
+        if: github.event.inputs.cleanup_type == 'all-stacks' || github.event.inputs.cleanup_type == 'test-resources'
+        run: |
+          echo "🗑️ Cleaning up CloudFormation stacks in ${{ matrix.region }}..."
+          
+          if [ -f "stacks-${{ matrix.region }}.json" ]; then
+            # Filter stacks based on cleanup type
+            if [ "${{ github.event.inputs.cleanup_type }}" == "test-resources" ]; then
+              # Only delete dev/test stacks
+              STACKS_TO_DELETE=$(cat stacks-${{ matrix.region }}.json | jq -r '.[] | select(.[0] | contains("-dev") or contains("-test")) | .[0]')
+            else
+              # Delete all NBA stacks
+              STACKS_TO_DELETE=$(cat stacks-${{ matrix.region }}.json | jq -r '.[] | .[0]')
+            fi
+            
+            for STACK in $STACKS_TO_DELETE; do
+              echo "Deleting stack: $STACK"
+              aws cloudformation delete-stack --stack-name "$STACK"
+              echo "✅ Delete initiated for $STACK"
+            done
+            
+            # Wait for deletions
+            for STACK in $STACKS_TO_DELETE; do
+              echo "⏳ Waiting for $STACK deletion..."
+              aws cloudformation wait stack-delete-complete --stack-name "$STACK" || echo "⚠️ $STACK deletion may have issues"
+            done
+          fi
+
+      - name: Cleanup Orphaned Resources
+        if: github.event.inputs.cleanup_type == 'orphaned-resources'
+        run: |
+          echo "🧹 Cleaning up orphaned resources in ${{ matrix.region }}..."
+          
+          # Terminate orphaned instances
+          if [ -f "instances-${{ matrix.region }}.json" ]; then
+            INSTANCES=$(cat instances-${{ matrix.region }}.json | jq -r 'flatten | map(select(.[2] == null)) | .[].0')
+            for INSTANCE in $INSTANCES; do
+              echo "Terminating orphaned instance: $INSTANCE"
+              aws ec2 terminate-instances --instance-ids "$INSTANCE"
+            done
+          fi
+          
+          # Delete orphaned security groups (after instances are terminated)
+          if [ -f "sgs-${{ matrix.region }}.json" ]; then
+            sleep 60  # Wait for instances to terminate
+            SGS=$(cat sgs-${{ matrix.region }}.json | jq -r '.[].0')
+            for SG in $SGS; do
+              echo "Deleting orphaned security group: $SG"
+              aws ec2 delete-security-group --group-id "$SG" || echo "⚠️ Could not delete $SG (may be in use)"
+            done
+          fi
+
+  cleanup-summary:
+    name: 📊 Cleanup Summary
+    needs: [validate-cleanup, scan-resources, cleanup-resources]
+    if: always() && needs.validate-cleanup.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download All Scan Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: scan-results-*
+          merge-multiple: true
+
+      - name: Generate Summary Report
+        run: |
+          echo "## 🧹 NBA Network Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cleanup Type**: ${{ github.event.inputs.cleanup_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Regions**: ${{ github.event.inputs.region }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: ${{ github.event.inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            echo "### 🔍 Resources Found (Dry Run - Nothing Deleted)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Resources Cleaned Up" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Summarize findings from all regions
+          for file in stacks-*.json; do
+            if [ -f "$file" ]; then
+              REGION=$(echo $file | sed 's/stacks-\(.*\)\.json/\1/')
+              COUNT=$(cat $file | jq -r 'length')
+              echo "**Region $REGION**: $COUNT CloudFormation stacks found" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
