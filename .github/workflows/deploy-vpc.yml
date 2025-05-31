@@ -56,7 +56,7 @@ jobs:
       - name: Validate CloudFormation Templates
         run: |
           echo "🏀 Validating NBA Arena Network CloudFormation templates..."
-          for template in cloudformation/vpc/*.yml cloudformation/vpc/*.yaml; do
+          for template in infrastructure/cloudformation/vpc/*.yml infrastructure/cloudformation/vpc/*.yaml; do
             if [ -f "$template" ]; then
               echo "Checking: $template"
               aws cloudformation validate-template --template-body file://$template
@@ -87,7 +87,7 @@ jobs:
       - name: Deploy VPC Stack
         run: |
           STACK_NAME="nba-arena-vpc-${{ github.event.inputs.environment || 'dev' }}"
-          TEMPLATE_FILE="cloudformation/vpc/vpc-main.yml"
+          TEMPLATE_FILE="infrastructure/cloudformation/vpc/nba-cloud-vpc.yml"
           
           echo "🏟️ Deploying NBA Arena Network VPC: $STACK_NAME"
           
