@@ -1,0 +1,108 @@
+name: 🎮 Demo - Quick Deploy & Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      auto_destroy:
+        description: 'Auto-destroy after 30 minutes?'
+        required: true
+        type: boolean
+        default: true
+      demo_name:
+        description: 'Demo identifier'
+        required: false
+        type: string
+        default: 'resume-demo'
+
+jobs:
+  demo-deploy:
+    name: 🚀 Deploy Demo Infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      stack_name: ${{ steps.deploy.outputs.stack_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy Demo VPC
+        id: deploy
+        run: |
+          STACK_NAME="nba-demo-${{ github.event.inputs.demo_name }}-$(date +%s)"
+          echo "stack_name=$STACK_NAME" >> $GITHUB_OUTPUT
+          
+          echo "🎮 Deploying demo infrastructure: $STACK_NAME"
+          echo "⏰ Auto-destroy enabled: ${{ github.event.inputs.auto_destroy }}"
+          
+          aws cloudformation deploy \
+            --stack-name $STACK_NAME \
+            --template-file infrastructure/cloudformation/vpc/nba-cloud-vpc.yml \
+            --parameter-overrides \
+              EnvironmentName=demo \
+              ProjectName=nba-demo \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --tags \
+              Project=nba-network-automation \
+              Environment=demo \
+              Purpose=resume-demonstration \
+              AutoDestroy=${{ github.event.inputs.auto_destroy }} \
+              CreatedAt=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+              ManagedBy=github-actions
+          
+          echo "✅ Demo infrastructure deployed!"
+          echo "📊 Estimated cost: < $0.01/hour"
+
+      - name: Display Access Information
+        run: |
+          STACK_NAME="${{ steps.deploy.outputs.stack_name }}"
+          
+          echo "## 🎯 Demo Infrastructure Ready!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Stack Name**: $STACK_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "**Region**: us-east-1" >> $GITHUB_STEP_SUMMARY
+          echo "**Auto-Destroy**: ${{ github.event.inputs.auto_destroy }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Resources Created:" >> $GITHUB_STEP_SUMMARY
+          
+          aws cloudformation describe-stack-resources \
+            --stack-name $STACK_NAME \
+            --query 'StackResources[?ResourceType==`AWS::EC2::VPC` || ResourceType==`AWS::EC2::Subnet`].[LogicalResourceId,PhysicalResourceId]' \
+            --output table >> $GITHUB_STEP_SUMMARY
+
+  auto-destroy:
+    name: ⏰ Auto-Destroy Timer
+    needs: demo-deploy
+    if: github.event.inputs.auto_destroy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait 30 minutes
+        run: |
+          echo "⏰ Waiting 30 minutes before auto-destroy..."
+          echo "Stack: ${{ needs.demo-deploy.outputs.stack_name }}"
+          sleep 1800
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Destroy Demo Infrastructure
+        run: |
+          STACK_NAME="${{ needs.demo-deploy.outputs.stack_name }}"
+          echo "🗑️ Auto-destroying demo infrastructure: $STACK_NAME"
+          
+          aws cloudformation delete-stack --stack-name $STACK_NAME
+          
+          echo "⏳ Waiting for destruction..."
+          aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME || true
+          
+          echo "✅ Demo infrastructure destroyed!"
+          echo "💰 Total cost: < $0.01"

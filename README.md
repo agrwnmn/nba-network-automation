@@ -3,6 +3,8 @@
 ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![Security](https://img.shields.io/badge/Security-Enabled-success?style=for-the-badge)
+![Cost](https://img.shields.io/badge/Cost-Optimized-success?style=for-the-badge)
 
 ## 🏆 Project Overview - Welcome to the Court!
 
