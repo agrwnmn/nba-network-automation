@@ -27,8 +27,17 @@ on:
           - sensitive
           - critical
 
+# GitHub Secrets Setup:
+# 1. Go to Settings > Secrets and variables > Actions in your GitHub repository
+# 2. Add the following secrets:
+#    - AWS_ACCESS_KEY_ID: Your AWS access key ID
+#    - AWS_SECRET_ACCESS_KEY: Your AWS secret access key
+# 3. Optional secrets for notifications:
+#    - SLACK_WEBHOOK_URL: Your Slack webhook URL for alerts
+#    - PAGERDUTY_TOKEN: Your PagerDuty integration token
+# 4. Ensure the IAM user has appropriate permissions for CloudWatch, EC2, and CloudTrail operations
+
 permissions:
-  id-token: write
   contents: read
   issues: write
 
@@ -50,7 +59,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Check VPC Flow Logs
@@ -136,7 +146,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Collect Network Performance Metrics
@@ -182,7 +193,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
       - name: Scan for Security Incidents
