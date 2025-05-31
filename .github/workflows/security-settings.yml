@@ -1,0 +1,43 @@
+name: 🔒 Security Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly security check
+
+jobs:
+  security-check:
+    name: Security Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for exposed secrets
+        run: |
+          echo "🔍 Scanning for potential exposed secrets..."
+          
+          # Check for AWS access key patterns
+          if grep -rE "AKIA[0-9A-Z]{16}" . --exclude-dir=.git; then
+            echo "❌ CRITICAL: Potential AWS Access Key found in code!"
+            exit 1
+          fi
+          
+          # Check for AWS secret key patterns
+          if grep -rE "[0-9a-zA-Z/+=]{40}" . --exclude-dir=.git | grep -i secret; then
+            echo "⚠️ WARNING: Potential secret key pattern found"
+          fi
+          
+          echo "✅ No exposed AWS credentials found in code"
+
+      - name: Validate workflow changes
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "🔍 Checking for workflow modifications..."
+          
+          # Check if workflows are being modified
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E "^\.github/workflows/"; then
+            echo "⚠️ WARNING: This PR modifies GitHub Actions workflows"
+            echo "Manual review required before merging!"
+          fi
