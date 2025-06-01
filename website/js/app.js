@@ -82,24 +82,27 @@ function createPopupContent(player) {
             `${player.high_school.city}, ${player.high_school.country}`) :
         `${player.high_school.city}, ${player.high_school.state}`;
     
+    // For US players, show high school. For international players, show their team/academy
     const schoolInfo = player.high_school.name;
-    
-    // Use placeholder images if actual images aren't available
-    const profilePhoto = `assets/img/players/${player.profile_photo || 'placeholder.jpg'}`;
-    const teamLogo = `assets/img/teams/${player.team_logo || 'nba-logo.png'}`;
+    const schoolLabel = player.is_international ? "Team/Academy" : "High School";
     
     return `
         <div class="player-popup">
             <div class="popup-header">
-                <img src="${profilePhoto}" alt="${player.name}" class="popup-photo" onerror="this.src='https://via.placeholder.com/60'">
+                <div class="player-avatar">
+                    <span class="avatar-initials">${player.name.split(' ').map(n => n[0]).join('')}</span>
+                </div>
                 <div class="popup-info">
                     <h3>#${player.draft_position} ${player.name}</h3>
-                    <p><strong>High School:</strong> ${schoolInfo}</p>
+                    <p><strong>Position:</strong> ${player.position}</p>
+                    <p><strong>${schoolLabel}:</strong> ${schoolInfo}</p>
                     <p><strong>Location:</strong> ${location}</p>
                 </div>
             </div>
             <div class="popup-team">
-                <img src="${teamLogo}" alt="${player.team}" class="team-logo" onerror="this.src='https://via.placeholder.com/30'">
+                <div class="team-circle">
+                    <span class="team-initials">${player.team.split(' ').slice(-1)[0].substring(0, 3).toUpperCase()}</span>
+                </div>
                 <span><strong>Drafted by:</strong> ${player.team}</span>
             </div>
         </div>

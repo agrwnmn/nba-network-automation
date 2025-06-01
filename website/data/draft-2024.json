@@ -1,6 +1,7 @@
 {
   "draft_year": 2024,
   "draft_date": "2024-06-26",
+  "total_picks": 58,
   "players": [
     {
       "draft_position": 1,
@@ -8,6 +9,7 @@
       "team": "Atlanta Hawks",
       "team_logo": "hawks.png",
       "profile_photo": "risacher.jpg",
+      "position": "SF",
       "high_school": {
         "name": "INSEP",
         "city": "Paris",
@@ -34,6 +36,7 @@
       "team": "Washington Wizards",
       "team_logo": "wizards.png",
       "profile_photo": "sarr.jpg",
+      "position": "C",
       "high_school": {
         "name": "Real Madrid Academy",
         "city": "Madrid",
@@ -60,6 +63,7 @@
       "team": "Houston Rockets",
       "team_logo": "rockets.png",
       "profile_photo": "sheppard.jpg",
+      "position": "SG",
       "high_school": {
         "name": "North Laurel High School",
         "city": "London",
@@ -79,6 +83,7 @@
       "team": "San Antonio Spurs",
       "team_logo": "spurs.png",
       "profile_photo": "castle.jpg",
+      "position": "PG",
       "high_school": {
         "name": "Newton High School",
         "city": "Covington",
@@ -98,14 +103,15 @@
       "team": "Detroit Pistons",
       "team_logo": "pistons.png",
       "profile_photo": "holland.jpg",
+      "position": "SF",
       "high_school": {
-        "name": "Duncanville High School",
-        "city": "Duncanville",
-        "state": "Texas",
+        "name": "G League Ignite",
+        "city": "Henderson",
+        "state": "Nevada",
         "country": "USA",
         "coordinates": {
-          "lat": 32.6518,
-          "lng": -96.9083
+          "lat": 36.0397,
+          "lng": -114.9817
         }
       },
       "birthplace": null,
@@ -117,22 +123,23 @@
       "team": "Charlotte Hornets",
       "team_logo": "hornets.png",
       "profile_photo": "salaun.jpg",
+      "position": "SF",
       "high_school": {
-        "name": "INSEP",
-        "city": "Paris",
+        "name": "Cholet Basket",
+        "city": "Cholet",
         "state": null,
         "country": "France",
         "coordinates": {
-          "lat": 48.8566,
-          "lng": 2.3522
+          "lat": 47.0588,
+          "lng": -0.8776
         }
       },
       "birthplace": {
-        "city": "Paris",
+        "city": "Olonne-sur-Mer",
         "country": "France",
         "coordinates": {
-          "lat": 48.8566,
-          "lng": 2.3522
+          "lat": 46.5433,
+          "lng": -1.7867
         }
       },
       "is_international": true
@@ -143,14 +150,15 @@
       "team": "Portland Trail Blazers",
       "team_logo": "blazers.png",
       "profile_photo": "clingan.jpg",
+      "position": "C",
       "high_school": {
-        "name": "Bristol Central High School",
-        "city": "Bristol",
+        "name": "University of Connecticut",
+        "city": "Storrs",
         "state": "Connecticut",
         "country": "USA",
         "coordinates": {
-          "lat": 41.6718,
-          "lng": -72.9493
+          "lat": 41.8084,
+          "lng": -72.2495
         }
       },
       "birthplace": null,
@@ -162,14 +170,15 @@
       "team": "Minnesota Timberwolves",
       "team_logo": "timberwolves.png",
       "profile_photo": "dillingham.jpg",
+      "position": "PG/SG",
       "high_school": {
-        "name": "Donda Academy",
-        "city": "Simi Valley",
-        "state": "California",
+        "name": "Combine Academy",
+        "city": "Lincolnton",
+        "state": "North Carolina",
         "country": "USA",
         "coordinates": {
-          "lat": 34.2694,
-          "lng": -118.7815
+          "lat": 35.4735,
+          "lng": -81.2545
         }
       },
       "birthplace": null,
@@ -181,14 +190,15 @@
       "team": "Memphis Grizzlies",
       "team_logo": "grizzlies.png",
       "profile_photo": "edey.jpg",
+      "position": "C",
       "high_school": {
-        "name": "IMG Academy",
-        "city": "Bradenton",
-        "state": "Florida",
+        "name": "Purdue University",
+        "city": "West Lafayette",
+        "state": "Indiana",
         "country": "USA",
         "coordinates": {
-          "lat": 27.4989,
-          "lng": -82.5748
+          "lat": 40.4259,
+          "lng": -86.9081
         }
       },
       "birthplace": {
@@ -207,18 +217,1091 @@
       "team": "Utah Jazz",
       "team_logo": "jazz.png",
       "profile_photo": "williams.jpg",
+      "position": "SG/SF",
       "high_school": {
-        "name": "Perry High School",
-        "city": "Gilbert",
-        "state": "Arizona",
+        "name": "University of Colorado",
+        "city": "Boulder",
+        "state": "Colorado",
         "country": "USA",
         "coordinates": {
-          "lat": 33.3528,
-          "lng": -111.7890
+          "lat": 40.0076,
+          "lng": -105.2659
         }
       },
       "birthplace": null,
       "is_international": false
+    },
+    {
+      "draft_position": 11,
+      "name": "Matas Buzelis",
+      "team": "Chicago Bulls",
+      "team_logo": "bulls.png",
+      "profile_photo": "buzelis.jpg",
+      "position": "SF/PF",
+      "high_school": {
+        "name": "G League Ignite",
+        "city": "Henderson",
+        "state": "Nevada",
+        "country": "USA",
+        "coordinates": {
+          "lat": 36.0397,
+          "lng": -114.9817
+        }
+      },
+      "birthplace": {
+        "city": "Chicago",
+        "country": "USA",
+        "coordinates": {
+          "lat": 41.8781,
+          "lng": -87.6298
+        }
+      },
+      "is_international": false
+    },
+    {
+      "draft_position": 12,
+      "name": "Nikola Topic",
+      "team": "Oklahoma City Thunder",
+      "team_logo": "thunder.png",
+      "profile_photo": "topic.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "KK Crvena zvezda",
+        "city": "Belgrade",
+        "state": null,
+        "country": "Serbia",
+        "coordinates": {
+          "lat": 44.7866,
+          "lng": 20.4489
+        }
+      },
+      "birthplace": {
+        "city": "Belgrade",
+        "country": "Serbia",
+        "coordinates": {
+          "lat": 44.7866,
+          "lng": 20.4489
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 13,
+      "name": "Devin Carter",
+      "team": "Sacramento Kings",
+      "team_logo": "kings.png",
+      "profile_photo": "carter.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "Cherry Creek High School",
+        "city": "Greenwood Village",
+        "state": "Colorado",
+        "country": "USA",
+        "coordinates": {
+          "lat": 39.6103,
+          "lng": -104.8197
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 14,
+      "name": "Bub Carrington",
+      "team": "Washington Wizards",
+      "team_logo": "wizards.png",
+      "profile_photo": "carrington.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "Saint Frances Academy",
+        "city": "Baltimore",
+        "state": "Maryland",
+        "country": "USA",
+        "coordinates": {
+          "lat": 39.2904,
+          "lng": -76.6122
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 15,
+      "name": "Kel'el Ware",
+      "team": "Miami Heat",
+      "team_logo": "heat.png",
+      "profile_photo": "ware.jpg",
+      "position": "C",
+      "high_school": {
+        "name": "North Little Rock High School",
+        "city": "North Little Rock",
+        "state": "Arkansas",
+        "country": "USA",
+        "coordinates": {
+          "lat": 34.7695,
+          "lng": -92.2671
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 16,
+      "name": "Jared McCain",
+      "team": "Philadelphia 76ers",
+      "team_logo": "76ers.png",
+      "profile_photo": "mccain.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "Centennial High School",
+        "city": "Corona",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 33.8753,
+          "lng": -117.5664
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 17,
+      "name": "Dalton Knecht",
+      "team": "Los Angeles Lakers",
+      "team_logo": "lakers.png",
+      "profile_photo": "knecht.jpg",
+      "position": "SF",
+      "high_school": {
+        "name": "Prairie View High School",
+        "city": "Henderson",
+        "state": "Colorado",
+        "country": "USA",
+        "coordinates": {
+          "lat": 39.8097,
+          "lng": -104.8697
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 18,
+      "name": "Tristan da Silva",
+      "team": "Orlando Magic",
+      "team_logo": "magic.png",
+      "profile_photo": "dasilva.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "University of Colorado",
+        "city": "Boulder",
+        "state": "Colorado",
+        "country": "USA",
+        "coordinates": {
+          "lat": 40.0076,
+          "lng": -105.2659
+        }
+      },
+      "birthplace": {
+        "city": "Munich",
+        "country": "Germany",
+        "coordinates": {
+          "lat": 48.1351,
+          "lng": 11.5820
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 19,
+      "name": "Ja'Kobe Walter",
+      "team": "Toronto Raptors",
+      "team_logo": "raptors.png",
+      "profile_photo": "walter.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "Baylor University",
+        "city": "Waco",
+        "state": "Texas",
+        "country": "USA",
+        "coordinates": {
+          "lat": 31.5489,
+          "lng": -97.1131
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 20,
+      "name": "Jaylon Tyson",
+      "team": "Cleveland Cavaliers",
+      "team_logo": "cavaliers.png",
+      "profile_photo": "tyson.jpg",
+      "position": "SF",
+      "high_school": {
+        "name": "California Golden Bears",
+        "city": "Berkeley",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 37.8719,
+          "lng": -122.2585
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 21,
+      "name": "Yves Missi",
+      "team": "New Orleans Pelicans",
+      "team_logo": "pelicans.png",
+      "profile_photo": "missi.jpg",
+      "position": "C",
+      "high_school": {
+        "name": "Baylor University",
+        "city": "Waco",
+        "state": "Texas",
+        "country": "USA",
+        "coordinates": {
+          "lat": 31.5489,
+          "lng": -97.1131
+        }
+      },
+      "birthplace": {
+        "city": "Brussels",
+        "country": "Belgium",
+        "coordinates": {
+          "lat": 50.8503,
+          "lng": 4.3517
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 22,
+      "name": "DaRon Holmes II",
+      "team": "Denver Nuggets",
+      "team_logo": "nuggets.png",
+      "profile_photo": "holmes.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "University of Dayton",
+        "city": "Dayton",
+        "state": "Ohio",
+        "country": "USA",
+        "coordinates": {
+          "lat": 39.7391,
+          "lng": -84.1711
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 23,
+      "name": "AJ Johnson",
+      "team": "Milwaukee Bucks",
+      "team_logo": "bucks.png",
+      "profile_photo": "johnson.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "NBL (Australia)",
+        "city": "Sydney",
+        "state": null,
+        "country": "Australia",
+        "coordinates": {
+          "lat": -33.8688,
+          "lng": 151.2093
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 24,
+      "name": "Kyshawn George",
+      "team": "Washington Wizards",
+      "team_logo": "wizards.png",
+      "profile_photo": "george.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "University of Miami",
+        "city": "Coral Gables",
+        "state": "Florida",
+        "country": "USA",
+        "coordinates": {
+          "lat": 25.7217,
+          "lng": -80.2794
+        }
+      },
+      "birthplace": {
+        "city": "Montreal",
+        "country": "Canada",
+        "coordinates": {
+          "lat": 45.5017,
+          "lng": -73.5673
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 25,
+      "name": "Pacome Dadiet",
+      "team": "New York Knicks",
+      "team_logo": "knicks.png",
+      "profile_photo": "dadiet.jpg",
+      "position": "SF",
+      "high_school": {
+        "name": "Ratiopharm Ulm",
+        "city": "Ulm",
+        "state": null,
+        "country": "Germany",
+        "coordinates": {
+          "lat": 48.4011,
+          "lng": 9.9876
+        }
+      },
+      "birthplace": {
+        "city": "Bordeaux",
+        "country": "France",
+        "coordinates": {
+          "lat": 44.8378,
+          "lng": -0.5792
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 26,
+      "name": "Dillon Jones",
+      "team": "Oklahoma City Thunder",
+      "team_logo": "thunder.png",
+      "profile_photo": "jones.jpg",
+      "position": "F",
+      "high_school": {
+        "name": "Weber State University",
+        "city": "Ogden",
+        "state": "Utah",
+        "country": "USA",
+        "coordinates": {
+          "lat": 41.2230,
+          "lng": -111.9738
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 27,
+      "name": "Terrence Shannon Jr.",
+      "team": "Minnesota Timberwolves",
+      "team_logo": "timberwolves.png",
+      "profile_photo": "shannon.jpg",
+      "position": "SG/SF",
+      "high_school": {
+        "name": "University of Illinois",
+        "city": "Champaign",
+        "state": "Illinois",
+        "country": "USA",
+        "coordinates": {
+          "lat": 40.1020,
+          "lng": -88.2272
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 28,
+      "name": "Ryan Dunn",
+      "team": "Phoenix Suns",
+      "team_logo": "suns.png",
+      "profile_photo": "dunn.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "University of Virginia",
+        "city": "Charlottesville",
+        "state": "Virginia",
+        "country": "USA",
+        "coordinates": {
+          "lat": 38.0336,
+          "lng": -78.5080
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 29,
+      "name": "Isaiah Collier",
+      "team": "Utah Jazz",
+      "team_logo": "jazz.png",
+      "profile_photo": "collier.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "USC Trojans",
+        "city": "Los Angeles",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 34.0224,
+          "lng": -118.2851
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 30,
+      "name": "Baylor Scheierman",
+      "team": "Boston Celtics",
+      "team_logo": "celtics.png",
+      "profile_photo": "scheierman.jpg",
+      "position": "SG/SF",
+      "high_school": {
+        "name": "Creighton University",
+        "city": "Omaha",
+        "state": "Nebraska",
+        "country": "USA",
+        "coordinates": {
+          "lat": 41.2524,
+          "lng": -95.9980
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 31,
+      "name": "Jonathan Mogbo",
+      "team": "Toronto Raptors",
+      "team_logo": "raptors.png",
+      "profile_photo": "mogbo.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "University of San Francisco",
+        "city": "San Francisco",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 37.7749,
+          "lng": -122.4194
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 32,
+      "name": "Kyle Filipowski",
+      "team": "Utah Jazz",
+      "team_logo": "jazz.png",
+      "profile_photo": "filipowski.jpg",
+      "position": "C/PF",
+      "high_school": {
+        "name": "Wilbraham & Monson Academy",
+        "city": "Wilbraham",
+        "state": "Massachusetts",
+        "country": "USA",
+        "coordinates": {
+          "lat": 42.1251,
+          "lng": -72.4312
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 33,
+      "name": "Tyler Smith",
+      "team": "Milwaukee Bucks",
+      "team_logo": "bucks.png",
+      "profile_photo": "smith.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "G League Ignite",
+        "city": "Henderson",
+        "state": "Nevada",
+        "country": "USA",
+        "coordinates": {
+          "lat": 36.0397,
+          "lng": -114.9817
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 34,
+      "name": "Tyler Kolek",
+      "team": "New York Knicks",
+      "team_logo": "knicks.png",
+      "profile_photo": "kolek.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "Marquette University",
+        "city": "Milwaukee",
+        "state": "Wisconsin",
+        "country": "USA",
+        "coordinates": {
+          "lat": 43.0389,
+          "lng": -87.9065
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 35,
+      "name": "Johnny Furphy",
+      "team": "Indiana Pacers",
+      "team_logo": "pacers.png",
+      "profile_photo": "furphy.jpg",
+      "position": "SF",
+      "high_school": {
+        "name": "University of Kansas",
+        "city": "Lawrence",
+        "state": "Kansas",
+        "country": "USA",
+        "coordinates": {
+          "lat": 38.9717,
+          "lng": -95.2353
+        }
+      },
+      "birthplace": {
+        "city": "Melbourne",
+        "country": "Australia",
+        "coordinates": {
+          "lat": -37.8136,
+          "lng": 144.9631
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 36,
+      "name": "Juan Nunez",
+      "team": "San Antonio Spurs",
+      "team_logo": "spurs.png",
+      "profile_photo": "nunez.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "Ratiopharm Ulm",
+        "city": "Ulm",
+        "state": null,
+        "country": "Germany",
+        "coordinates": {
+          "lat": 48.4011,
+          "lng": 9.9876
+        }
+      },
+      "birthplace": {
+        "city": "Madrid",
+        "country": "Spain",
+        "coordinates": {
+          "lat": 40.4168,
+          "lng": -3.7038
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 37,
+      "name": "Bobi Klintman",
+      "team": "Detroit Pistons",
+      "team_logo": "pistons.png",
+      "profile_photo": "klintman.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "Cairns Taipans",
+        "city": "Cairns",
+        "state": null,
+        "country": "Australia",
+        "coordinates": {
+          "lat": -16.9186,
+          "lng": 145.7781
+        }
+      },
+      "birthplace": {
+        "city": "Malmo",
+        "country": "Sweden",
+        "coordinates": {
+          "lat": 55.6050,
+          "lng": 13.0038
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 38,
+      "name": "Ajay Mitchell",
+      "team": "Oklahoma City Thunder",
+      "team_logo": "thunder.png",
+      "profile_photo": "mitchell.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "UC Santa Barbara",
+        "city": "Santa Barbara",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 34.4140,
+          "lng": -119.8489
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 39,
+      "name": "Jaylen Wells",
+      "team": "Memphis Grizzlies",
+      "team_logo": "grizzlies.png",
+      "profile_photo": "wells.jpg",
+      "position": "SG/SF",
+      "high_school": {
+        "name": "Washington State University",
+        "city": "Pullman",
+        "state": "Washington",
+        "country": "USA",
+        "coordinates": {
+          "lat": 46.7298,
+          "lng": -117.1817
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 40,
+      "name": "Oso Ighodaro",
+      "team": "Phoenix Suns",
+      "team_logo": "suns.png",
+      "profile_photo": "ighodaro.jpg",
+      "position": "C",
+      "high_school": {
+        "name": "Marquette University",
+        "city": "Milwaukee",
+        "state": "Wisconsin",
+        "country": "USA",
+        "coordinates": {
+          "lat": 43.0389,
+          "lng": -87.9065
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 41,
+      "name": "Adem Bona",
+      "team": "Philadelphia 76ers",
+      "team_logo": "76ers.png",
+      "profile_photo": "bona.jpg",
+      "position": "C",
+      "high_school": {
+        "name": "UCLA",
+        "city": "Los Angeles",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 34.0689,
+          "lng": -118.4452
+        }
+      },
+      "birthplace": {
+        "city": "Lagos",
+        "country": "Nigeria",
+        "coordinates": {
+          "lat": 6.5244,
+          "lng": 3.3792
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 42,
+      "name": "KJ Simpson",
+      "team": "Charlotte Hornets",
+      "team_logo": "hornets.png",
+      "profile_photo": "simpson.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "University of Colorado",
+        "city": "Boulder",
+        "state": "Colorado",
+        "country": "USA",
+        "coordinates": {
+          "lat": 40.0076,
+          "lng": -105.2659
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 43,
+      "name": "Nikola Djurisic",
+      "team": "Atlanta Hawks",
+      "team_logo": "hawks.png",
+      "profile_photo": "djurisic.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "KK Mega Basket",
+        "city": "Belgrade",
+        "state": null,
+        "country": "Serbia",
+        "coordinates": {
+          "lat": 44.7866,
+          "lng": 20.4489
+        }
+      },
+      "birthplace": {
+        "city": "Belgrade",
+        "country": "Serbia",
+        "coordinates": {
+          "lat": 44.7866,
+          "lng": 20.4489
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 44,
+      "name": "Pelle Larsson",
+      "team": "Miami Heat",
+      "team_logo": "heat.png",
+      "profile_photo": "larsson.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "University of Arizona",
+        "city": "Tucson",
+        "state": "Arizona",
+        "country": "USA",
+        "coordinates": {
+          "lat": 32.2319,
+          "lng": -110.9501
+        }
+      },
+      "birthplace": {
+        "city": "Malmo",
+        "country": "Sweden",
+        "coordinates": {
+          "lat": 55.6050,
+          "lng": 13.0038
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 45,
+      "name": "Jamal Shead",
+      "team": "Toronto Raptors",
+      "team_logo": "raptors.png",
+      "profile_photo": "shead.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "University of Houston",
+        "city": "Houston",
+        "state": "Texas",
+        "country": "USA",
+        "coordinates": {
+          "lat": 29.7199,
+          "lng": -95.3422
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 46,
+      "name": "Cam Christie",
+      "team": "LA Clippers",
+      "team_logo": "clippers.png",
+      "profile_photo": "christie.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "University of Minnesota",
+        "city": "Minneapolis",
+        "state": "Minnesota",
+        "country": "USA",
+        "coordinates": {
+          "lat": 44.9778,
+          "lng": -93.2650
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 47,
+      "name": "Antonio Reeves",
+      "team": "New Orleans Pelicans",
+      "team_logo": "pelicans.png",
+      "profile_photo": "reeves.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "University of Kentucky",
+        "city": "Lexington",
+        "state": "Kentucky",
+        "country": "USA",
+        "coordinates": {
+          "lat": 38.0307,
+          "lng": -84.5037
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 48,
+      "name": "Harrison Ingram",
+      "team": "San Antonio Spurs",
+      "team_logo": "spurs.png",
+      "profile_photo": "ingram.jpg",
+      "position": "SF",
+      "high_school": {
+        "name": "University of North Carolina",
+        "city": "Chapel Hill",
+        "state": "North Carolina",
+        "country": "USA",
+        "coordinates": {
+          "lat": 35.9132,
+          "lng": -79.0558
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 49,
+      "name": "Tristen Newton",
+      "team": "Indiana Pacers",
+      "team_logo": "pacers.png",
+      "profile_photo": "newton.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "University of Connecticut",
+        "city": "Storrs",
+        "state": "Connecticut",
+        "country": "USA",
+        "coordinates": {
+          "lat": 41.8084,
+          "lng": -72.2495
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 50,
+      "name": "Enrique Freeman",
+      "team": "Indiana Pacers",
+      "team_logo": "pacers.png",
+      "profile_photo": "freeman.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "University of Akron",
+        "city": "Akron",
+        "state": "Ohio",
+        "country": "USA",
+        "coordinates": {
+          "lat": 41.0732,
+          "lng": -81.5179
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 51,
+      "name": "Melvin Ajinca",
+      "team": "Dallas Mavericks",
+      "team_logo": "mavericks.png",
+      "profile_photo": "ajinca.jpg",
+      "position": "SF",
+      "high_school": {
+        "name": "Saint-Quentin Basketball",
+        "city": "Saint-Quentin",
+        "state": null,
+        "country": "France",
+        "coordinates": {
+          "lat": 49.8475,
+          "lng": 3.2875
+        }
+      },
+      "birthplace": {
+        "city": "Saint-Quentin",
+        "country": "France",
+        "coordinates": {
+          "lat": 49.8475,
+          "lng": 3.2875
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 52,
+      "name": "Quinten Post",
+      "team": "Golden State Warriors",
+      "team_logo": "warriors.png",
+      "profile_photo": "post.jpg",
+      "position": "C",
+      "high_school": {
+        "name": "Boston College",
+        "city": "Chestnut Hill",
+        "state": "Massachusetts",
+        "country": "USA",
+        "coordinates": {
+          "lat": 42.3355,
+          "lng": -71.1685
+        }
+      },
+      "birthplace": {
+        "city": "Amsterdam",
+        "country": "Netherlands",
+        "coordinates": {
+          "lat": 52.3702,
+          "lng": 4.8951
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 53,
+      "name": "Cam Spencer",
+      "team": "Memphis Grizzlies",
+      "team_logo": "grizzlies.png",
+      "profile_photo": "spencer.jpg",
+      "position": "SG",
+      "high_school": {
+        "name": "University of Connecticut",
+        "city": "Storrs",
+        "state": "Connecticut",
+        "country": "USA",
+        "coordinates": {
+          "lat": 41.8084,
+          "lng": -72.2495
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 54,
+      "name": "Anton Watson",
+      "team": "Boston Celtics",
+      "team_logo": "celtics.png",
+      "profile_photo": "watson.jpg",
+      "position": "PF",
+      "high_school": {
+        "name": "Gonzaga University",
+        "city": "Spokane",
+        "state": "Washington",
+        "country": "USA",
+        "coordinates": {
+          "lat": 47.6587,
+          "lng": -117.4260
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 55,
+      "name": "Bronny James",
+      "team": "Los Angeles Lakers",
+      "team_logo": "lakers.png",
+      "profile_photo": "james.jpg",
+      "position": "PG",
+      "high_school": {
+        "name": "Sierra Canyon School",
+        "city": "Chatsworth",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 34.2581,
+          "lng": -118.6015
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 56,
+      "name": "Kevin McCullar Jr.",
+      "team": "New York Knicks",
+      "team_logo": "knicks.png",
+      "profile_photo": "mccullar.jpg",
+      "position": "SG/SF",
+      "high_school": {
+        "name": "University of Kansas",
+        "city": "Lawrence",
+        "state": "Kansas",
+        "country": "USA",
+        "coordinates": {
+          "lat": 38.9717,
+          "lng": -95.2353
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 57,
+      "name": "Ulrich Chomche",
+      "team": "Toronto Raptors",
+      "team_logo": "raptors.png",
+      "profile_photo": "chomche.jpg",
+      "position": "C",
+      "high_school": {
+        "name": "NBA Academy Africa",
+        "city": "Saly",
+        "state": null,
+        "country": "Senegal",
+        "coordinates": {
+          "lat": 14.2574,
+          "lng": -16.9671
+        }
+      },
+      "birthplace": {
+        "city": "Douala",
+        "country": "Cameroon",
+        "coordinates": {
+          "lat": 4.0483,
+          "lng": 9.7043
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 58,
+      "name": "Ariel Hukporti",
+      "team": "New York Knicks",
+      "team_logo": "knicks.png",
+      "profile_photo": "hukporti.jpg",
+      "position": "C",
+      "high_school": {
+        "name": "MHP Riesen Ludwigsburg",
+        "city": "Ludwigsburg",
+        "state": null,
+        "country": "Germany",
+        "coordinates": {
+          "lat": 48.8969,
+          "lng": 9.1915
+        }
+      },
+      "birthplace": {
+        "city": "Melbourne",
+        "country": "Australia",
+        "coordinates": {
+          "lat": -37.8136,
+          "lng": 144.9631
+        }
+      },
+      "is_international": true
     }
   ]
 }

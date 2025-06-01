@@ -184,7 +184,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-<<<<<<< HEAD
       - name: Empty S3 Bucket
         run: |
           WEBSITE_STACK_NAME="${{ needs.deploy-website.outputs.website_stack_name }}"
