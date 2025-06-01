@@ -258,7 +258,6 @@ jobs:
           else
             echo "ℹ️ Website stack not found"
           fi
-
   destruction-summary:
     name: 📝 Destruction Summary
     needs: [validate-destruction, destroy-infrastructure]
