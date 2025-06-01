@@ -279,6 +279,76 @@ body {
     color: #000;
 }
 
+/* Player Avatar Styles */
+.player-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+}
+
+.avatar-initials {
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+}
+
+.team-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 35px;
+    margin-right: 10px;
+}
+
+.team-initials {
+    color: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.popup-info h3 {
+    margin: 0 0 8px 0;
+    color: #1e3a8a;
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1.3rem;
+}
+
+.popup-info p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.popup-team {
+    display: flex;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.popup-team span {
+    font-size: 0.9rem;
+    color: #374151;
+}
+
 /* Footer */
 .footer {
     background-color: #0f1427;
