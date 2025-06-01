@@ -30,6 +30,11 @@ on:
         description: '📋 Specific stack name (leave empty for default)'
         required: false
         type: string
+      destroy_website:
+        description: '🌐 Also destroy NBA Draft Map website?'
+        required: false
+        type: boolean
+        default: true
 
 concurrency:
   group: destroy-${{ github.event.inputs.environment }}-${{ github.event.inputs.region }}
@@ -208,6 +213,51 @@ jobs:
             --query 'Stacks[?Tags[?Key==`Project` && Value==`nba-network-automation`]].[StackName,StackStatus]' \
             --output table || echo "No other NBA Network stacks found"
 
+  destroy-website:
+    name: 🌐 Destroy Website Infrastructure
+    needs: [validate-destruction, destroy-infrastructure]
+    if: needs.validate-destruction.outputs.proceed == 'true' && github.event.inputs.destroy_website == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}-destroy
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region }}
+
+      - name: Empty S3 Bucket
+        run: |
+          WEBSITE_STACK="nba-arena-website-${{ github.event.inputs.environment }}"
+          echo "🗑️ Checking for website stack: $WEBSITE_STACK"
+          
+          if aws cloudformation describe-stacks --stack-name $WEBSITE_STACK 2>/dev/null; then
+            BUCKET_NAME=$(aws cloudformation describe-stacks \
+              --stack-name $WEBSITE_STACK \
+              --query 'Stacks[0].Outputs[?OutputKey==`WebsiteBucket`].OutputValue' \
+              --output text)
+            
+            if [ -n "$BUCKET_NAME" ]; then
+              echo "🧹 Emptying S3 bucket: $BUCKET_NAME"
+              aws s3 rm s3://$BUCKET_NAME --recursive || true
+            fi
+          fi
+
+      - name: Delete Website Stack
+        run: |
+          WEBSITE_STACK="nba-arena-website-${{ github.event.inputs.environment }}"
+          
+          if aws cloudformation describe-stacks --stack-name $WEBSITE_STACK 2>/dev/null; then
+            echo "🗑️ Deleting website stack: $WEBSITE_STACK"
+            aws cloudformation delete-stack --stack-name $WEBSITE_STACK
+            
+            echo "⏳ Waiting for website stack deletion..."
+            aws cloudformation wait stack-delete-complete --stack-name $WEBSITE_STACK || true
+            echo "✅ Website stack deleted"
+          else
+            echo "ℹ️ Website stack not found"
+          fi
   destruction-summary:
     name: 📝 Destruction Summary
     needs: [validate-destruction, destroy-infrastructure]
