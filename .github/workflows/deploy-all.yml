@@ -1,0 +1,110 @@
+name: 🚀 Deploy All Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: dev
+
+jobs:
+  deploy-vpc:
+    name: Deploy VPC
+    runs-on: ubuntu-latest
+    outputs:
+      vpc_id: ${{ steps.get_vpc.outputs.vpc_id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy VPC
+        run: |
+          aws cloudformation deploy \
+            --stack-name nba-arena-vpc-${{ github.event.inputs.environment }} \
+            --template-file infrastructure/cloudformation/vpc/nba-cloud-vpc.yml \
+            --parameter-overrides EnvironmentName=${{ github.event.inputs.environment }} \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Get VPC ID
+        id: get_vpc
+        run: |
+          VPC_ID=$(aws cloudformation describe-stacks \
+            --stack-name nba-arena-vpc-${{ github.event.inputs.environment }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`VPCId`].OutputValue' \
+            --output text)
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+
+  deploy-website:
+    name: Deploy Website
+    needs: deploy-vpc
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy Website Infrastructure
+        run: |
+          aws cloudformation deploy \
+            --stack-name nba-arena-website-${{ github.event.inputs.environment }} \
+            --template-file infrastructure/cloudformation/s3/nba-draft-website.yml \
+            --parameter-overrides EnvironmentName=${{ github.event.inputs.environment }} \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Get Bucket Name
+        id: get_bucket
+        run: |
+          BUCKET=$(aws cloudformation describe-stacks \
+            --stack-name nba-arena-website-${{ github.event.inputs.environment }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebsiteBucket`].OutputValue' \
+            --output text)
+          echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
+
+      - name: Upload Website Files
+        run: |
+          BUCKET=${{ steps.get_bucket.outputs.bucket }}
+          aws s3 sync website/ s3://$BUCKET/ --delete
+          aws s3 cp website/index.html s3://$BUCKET/index.html --content-type "text/html" --cache-control "max-age=300"
+          aws s3 cp website/css/style.css s3://$BUCKET/css/style.css --content-type "text/css" --cache-control "max-age=86400"
+          aws s3 cp website/js/app.js s3://$BUCKET/js/app.js --content-type "application/javascript" --cache-control "max-age=86400"
+          aws s3 cp website/data/draft-2024.json s3://$BUCKET/data/draft-2024.json --content-type "application/json" --cache-control "max-age=3600"
+
+      - name: Get CloudFront URL
+        run: |
+          CF_URL=$(aws cloudformation describe-stacks \
+            --stack-name nba-arena-website-${{ github.event.inputs.environment }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
+            --output text)
+          
+          echo "# 🎉 NBA Draft Map Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🌐 Access your website at:" >> $GITHUB_STEP_SUMMARY
+          echo "### $CF_URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Features:" >> $GITHUB_STEP_SUMMARY
+          echo "- Interactive world map with 2024 NBA draft picks" >> $GITHUB_STEP_SUMMARY
+          echo "- Hover over pins to see player details" >> $GITHUB_STEP_SUMMARY
+          echo "- Click sidebar to zoom to players" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
