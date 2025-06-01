@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'NBA Draft Map - S3 Static Website Hosting for Interactive Draft Player Map'
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+    Default: nba-network
+  
+  DomainName:
+    Description: Domain name for the website (optional - leave empty for S3 URL)
+    Type: String
+    Default: ''
+
+Resources:
+  # S3 Bucket for Website Hosting
+  DraftWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-draft-map-${AWS::AccountId}'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-draft-website
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Project
+          Value: NBA-Network-Automation
+
+  # Bucket Policy for Public Read Access
+  DraftWebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DraftWebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - s3:GetObject
+            Resource: !Sub '${DraftWebsiteBucket.Arn}/*'
+
+  # CloudFront Distribution for Better Performance and HTTPS
+  DraftWebsiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt DraftWebsiteBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        Comment: !Sub 'NBA Draft Map - ${EnvironmentName}'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-draft-cdn
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Lambda Function for Uploading Website Files
+  WebsiteDeployFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${EnvironmentName}-deploy-draft-website
+      Runtime: python3.9
+      Handler: index.handler
+      Role: !GetAtt WebsiteDeployRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import urllib3
+          
+          def handler(event, context):
+              # This is a placeholder - actual deployment handled by GitHub Actions
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Website deployment triggered')
+              }
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-deploy-function
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # IAM Role for Lambda
+  WebsiteDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3DeployPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                  - s3:DeleteObject
+                Resource: !Sub '${DraftWebsiteBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !GetAtt DraftWebsiteBucket.Arn
+
+Outputs:
+  WebsiteURL:
+    Description: URL of the NBA Draft Map website
+    Value: !Sub 'http://${DraftWebsiteBucket}.s3-website-${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub ${EnvironmentName}-WEBSITE-URL
+
+  WebsiteBucket:
+    Description: Name of the S3 bucket hosting the website
+    Value: !Ref DraftWebsiteBucket
+    Export:
+      Name: !Sub ${EnvironmentName}-WEBSITE-BUCKET
+
+  CloudFrontURL:
+    Description: CloudFront distribution URL (HTTPS)
+    Value: !Sub 'https://${DraftWebsiteDistribution.DomainName}'
+    Export:
+      Name: !Sub ${EnvironmentName}-CLOUDFRONT-URL
+
+  CloudFrontDistributionId:
+    Description: CloudFront distribution ID
+    Value: !Ref DraftWebsiteDistribution
+    Export:
+      Name: !Sub ${EnvironmentName}-CLOUDFRONT-ID

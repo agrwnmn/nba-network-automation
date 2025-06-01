@@ -1,0 +1,253 @@
+name: 🏀 NBA Arena Network - Full Stack Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/cloudformation/**'
+      - 'website/**'
+      - '.github/workflows/deploy-with-website.yml'
+  
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '🏟️ Target Environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: dev
+      region:
+        description: '🌎 AWS Region'
+        required: true
+        type: choice
+        options:
+          - us-east-1
+          - us-west-2
+          - eu-west-1
+          - eu-central-1
+        default: us-east-1
+      deploy_website:
+        description: '🌐 Deploy Draft Map Website?'
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'dev' }}-${{ github.event.inputs.region || 'us-east-1' }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-templates:
+    name: 🔍 Validate CloudFormation Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-1' }}
+
+      - name: Validate VPC Template
+        run: |
+          echo "🏀 Validating VPC CloudFormation template..."
+          aws cloudformation validate-template \
+            --template-body file://infrastructure/cloudformation/vpc/nba-cloud-vpc.yml
+
+      - name: Validate Website Template
+        if: github.event.inputs.deploy_website != 'false'
+        run: |
+          echo "🌐 Validating Website CloudFormation template..."
+          aws cloudformation validate-template \
+            --template-body file://infrastructure/cloudformation/s3/nba-draft-website.yml
+
+  deploy-vpc:
+    name: 🏟️ Deploy VPC Infrastructure
+    needs: validate-templates
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    outputs:
+      vpc_id: ${{ steps.vpc_outputs.outputs.vpc_id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-1' }}
+
+      - name: Deploy VPC Stack
+        run: |
+          STACK_NAME="nba-arena-vpc-${{ github.event.inputs.environment || 'dev' }}"
+          
+          echo "🏀 Deploying NBA Arena VPC: $STACK_NAME"
+          
+          aws cloudformation deploy \
+            --stack-name $STACK_NAME \
+            --template-file infrastructure/cloudformation/vpc/nba-cloud-vpc.yml \
+            --parameter-overrides \
+              EnvironmentName=${{ github.event.inputs.environment || 'dev' }} \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --tags \
+              Project=nba-network-automation \
+              Environment=${{ github.event.inputs.environment || 'dev' }} \
+              Component=vpc \
+              ManagedBy=github-actions
+
+      - name: Get VPC Outputs
+        id: vpc_outputs
+        run: |
+          STACK_NAME="nba-arena-vpc-${{ github.event.inputs.environment || 'dev' }}"
+          VPC_ID=$(aws cloudformation describe-stacks \
+            --stack-name $STACK_NAME \
+            --query 'Stacks[0].Outputs[?OutputKey==`VPCId`].OutputValue' \
+            --output text)
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+
+  deploy-website-infrastructure:
+    name: 🌐 Deploy Website Infrastructure
+    needs: validate-templates
+    if: github.event.inputs.deploy_website != 'false'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    outputs:
+      bucket_name: ${{ steps.website_outputs.outputs.bucket_name }}
+      cloudfront_url: ${{ steps.website_outputs.outputs.cloudfront_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-1' }}
+
+      - name: Deploy Website Stack
+        run: |
+          STACK_NAME="nba-arena-website-${{ github.event.inputs.environment || 'dev' }}"
+          
+          echo "🌐 Deploying NBA Draft Website Infrastructure: $STACK_NAME"
+          
+          aws cloudformation deploy \
+            --stack-name $STACK_NAME \
+            --template-file infrastructure/cloudformation/s3/nba-draft-website.yml \
+            --parameter-overrides \
+              EnvironmentName=${{ github.event.inputs.environment || 'dev' }} \
+            --capabilities CAPABILITY_IAM \
+            --tags \
+              Project=nba-network-automation \
+              Environment=${{ github.event.inputs.environment || 'dev' }} \
+              Component=website \
+              ManagedBy=github-actions
+
+      - name: Get Website Outputs
+        id: website_outputs
+        run: |
+          STACK_NAME="nba-arena-website-${{ github.event.inputs.environment || 'dev' }}"
+          
+          BUCKET_NAME=$(aws cloudformation describe-stacks \
+            --stack-name $STACK_NAME \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebsiteBucket`].OutputValue' \
+            --output text)
+          
+          CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
+            --stack-name $STACK_NAME \
+            --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
+            --output text)
+          
+          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+          echo "cloudfront_url=$CLOUDFRONT_URL" >> $GITHUB_OUTPUT
+
+  deploy-website-content:
+    name: 📦 Deploy Website Content
+    needs: deploy-website-infrastructure
+    if: github.event.inputs.deploy_website != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.region || 'us-east-1' }}
+
+      - name: Deploy Website Files
+        run: |
+          chmod +x scripts/deploy-website.sh
+          ./scripts/deploy-website.sh ${{ github.event.inputs.environment || 'dev' }}
+
+      - name: Create Deployment Summary
+        run: |
+          echo "## 🎉 NBA Draft Map Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Website URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- **CloudFront (HTTPS)**: ${{ needs.deploy-website-infrastructure.outputs.cloudfront_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: ${{ github.event.inputs.region || 'us-east-1' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🏀 Features:" >> $GITHUB_STEP_SUMMARY
+          echo "- Interactive world map showing 2024 NBA draft picks" >> $GITHUB_STEP_SUMMARY
+          echo "- Player high school locations (or birthplace for international players)" >> $GITHUB_STEP_SUMMARY
+          echo "- Hover to see player details and team information" >> $GITHUB_STEP_SUMMARY
+          echo "- Sidebar with full draft list" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Visit the CloudFront URL to explore the interactive map! 🗺️" >> $GITHUB_STEP_SUMMARY
+
+  deployment-summary:
+    name: 📊 Deployment Summary
+    needs: [deploy-vpc, deploy-website-infrastructure, deploy-website-content]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Final Summary
+        run: |
+          echo "## 🏀 NBA Arena Network Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Infrastructure Status:" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.deploy-vpc.result }}" == "success" ]; then
+            echo "- ✅ VPC Infrastructure: Deployed" >> $GITHUB_STEP_SUMMARY
+            echo "  - VPC ID: ${{ needs.deploy-vpc.outputs.vpc_id }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ VPC Infrastructure: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.deploy-website-infrastructure.result }}" == "success" ]; then
+            echo "- ✅ Website Infrastructure: Deployed" >> $GITHUB_STEP_SUMMARY
+            echo "  - Bucket: ${{ needs.deploy-website-infrastructure.outputs.bucket_name }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Website Infrastructure: Failed or Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.deploy-website-content.result }}" == "success" ]; then
+            echo "- ✅ Website Content: Deployed" >> $GITHUB_STEP_SUMMARY
+            echo "  - URL: ${{ needs.deploy-website-infrastructure.outputs.cloudfront_url }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Website Content: Failed or Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Details:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: ${{ github.event.inputs.region || 'us-east-1' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY

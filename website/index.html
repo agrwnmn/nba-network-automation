@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Draft 2024 - Interactive Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="title">🏀 NBA Draft 2024 - Player Origins Map</h1>
+            <p class="subtitle">Explore where the top draft picks went to high school</p>
+        </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="container">
+            <div class="stat">
+                <span class="stat-value" id="total-players">0</span>
+                <span class="stat-label">Total Players</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="usa-players">0</span>
+                <span class="stat-label">USA Players</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="intl-players">0</span>
+                <span class="stat-label">International</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="countries">0</span>
+                <span class="stat-label">Countries</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Player List Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Draft Picks</h2>
+            <button class="toggle-btn" id="toggle-sidebar">◀</button>
+        </div>
+        <div class="player-list" id="player-list"></div>
+    </div>
+
+    <!-- Player Info Modal -->
+    <div class="modal" id="player-modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-player-info"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Built with ❤️ using AWS CloudFormation & GitHub Actions | Part of NBA Network Automation Project</p>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="js/app.js"></script>
+</body>
+</html>

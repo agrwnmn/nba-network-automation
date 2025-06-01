@@ -1,0 +1,224 @@
+{
+  "draft_year": 2024,
+  "draft_date": "2024-06-26",
+  "players": [
+    {
+      "draft_position": 1,
+      "name": "Zaccharie Risacher",
+      "team": "Atlanta Hawks",
+      "team_logo": "hawks.png",
+      "profile_photo": "risacher.jpg",
+      "high_school": {
+        "name": "INSEP",
+        "city": "Paris",
+        "state": null,
+        "country": "France",
+        "coordinates": {
+          "lat": 48.8566,
+          "lng": 2.3522
+        }
+      },
+      "birthplace": {
+        "city": "Malaga",
+        "country": "Spain",
+        "coordinates": {
+          "lat": 36.7213,
+          "lng": -4.4214
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 2,
+      "name": "Alexandre Sarr",
+      "team": "Washington Wizards",
+      "team_logo": "wizards.png",
+      "profile_photo": "sarr.jpg",
+      "high_school": {
+        "name": "Real Madrid Academy",
+        "city": "Madrid",
+        "state": null,
+        "country": "Spain",
+        "coordinates": {
+          "lat": 40.4168,
+          "lng": -3.7038
+        }
+      },
+      "birthplace": {
+        "city": "Bordeaux",
+        "country": "France",
+        "coordinates": {
+          "lat": 44.8378,
+          "lng": -0.5792
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 3,
+      "name": "Reed Sheppard",
+      "team": "Houston Rockets",
+      "team_logo": "rockets.png",
+      "profile_photo": "sheppard.jpg",
+      "high_school": {
+        "name": "North Laurel High School",
+        "city": "London",
+        "state": "Kentucky",
+        "country": "USA",
+        "coordinates": {
+          "lat": 37.1289,
+          "lng": -84.0833
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 4,
+      "name": "Stephon Castle",
+      "team": "San Antonio Spurs",
+      "team_logo": "spurs.png",
+      "profile_photo": "castle.jpg",
+      "high_school": {
+        "name": "Newton High School",
+        "city": "Covington",
+        "state": "Georgia",
+        "country": "USA",
+        "coordinates": {
+          "lat": 33.5968,
+          "lng": -83.8602
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 5,
+      "name": "Ron Holland II",
+      "team": "Detroit Pistons",
+      "team_logo": "pistons.png",
+      "profile_photo": "holland.jpg",
+      "high_school": {
+        "name": "Duncanville High School",
+        "city": "Duncanville",
+        "state": "Texas",
+        "country": "USA",
+        "coordinates": {
+          "lat": 32.6518,
+          "lng": -96.9083
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 6,
+      "name": "Tidjane Salaun",
+      "team": "Charlotte Hornets",
+      "team_logo": "hornets.png",
+      "profile_photo": "salaun.jpg",
+      "high_school": {
+        "name": "INSEP",
+        "city": "Paris",
+        "state": null,
+        "country": "France",
+        "coordinates": {
+          "lat": 48.8566,
+          "lng": 2.3522
+        }
+      },
+      "birthplace": {
+        "city": "Paris",
+        "country": "France",
+        "coordinates": {
+          "lat": 48.8566,
+          "lng": 2.3522
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 7,
+      "name": "Donovan Clingan",
+      "team": "Portland Trail Blazers",
+      "team_logo": "blazers.png",
+      "profile_photo": "clingan.jpg",
+      "high_school": {
+        "name": "Bristol Central High School",
+        "city": "Bristol",
+        "state": "Connecticut",
+        "country": "USA",
+        "coordinates": {
+          "lat": 41.6718,
+          "lng": -72.9493
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 8,
+      "name": "Rob Dillingham",
+      "team": "Minnesota Timberwolves",
+      "team_logo": "timberwolves.png",
+      "profile_photo": "dillingham.jpg",
+      "high_school": {
+        "name": "Donda Academy",
+        "city": "Simi Valley",
+        "state": "California",
+        "country": "USA",
+        "coordinates": {
+          "lat": 34.2694,
+          "lng": -118.7815
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    },
+    {
+      "draft_position": 9,
+      "name": "Zach Edey",
+      "team": "Memphis Grizzlies",
+      "team_logo": "grizzlies.png",
+      "profile_photo": "edey.jpg",
+      "high_school": {
+        "name": "IMG Academy",
+        "city": "Bradenton",
+        "state": "Florida",
+        "country": "USA",
+        "coordinates": {
+          "lat": 27.4989,
+          "lng": -82.5748
+        }
+      },
+      "birthplace": {
+        "city": "Toronto",
+        "country": "Canada",
+        "coordinates": {
+          "lat": 43.6532,
+          "lng": -79.3832
+        }
+      },
+      "is_international": true
+    },
+    {
+      "draft_position": 10,
+      "name": "Cody Williams",
+      "team": "Utah Jazz",
+      "team_logo": "jazz.png",
+      "profile_photo": "williams.jpg",
+      "high_school": {
+        "name": "Perry High School",
+        "city": "Gilbert",
+        "state": "Arizona",
+        "country": "USA",
+        "coordinates": {
+          "lat": 33.3528,
+          "lng": -111.7890
+        }
+      },
+      "birthplace": null,
+      "is_international": false
+    }
+  ]
+}
