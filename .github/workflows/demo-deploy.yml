@@ -58,33 +58,123 @@ jobs:
           echo "✅ Demo infrastructure deployed!"
           echo "📊 Estimated cost: < $0.01/hour"
 
-      - name: Display Access Information
+      - name: Display VPC Information
         run: |
           STACK_NAME="${{ steps.deploy.outputs.stack_name }}"
           
-          echo "## 🎯 Demo Infrastructure Ready!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 Demo VPC Infrastructure Ready!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Stack Name**: $STACK_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "**VPC Stack Name**: $STACK_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**Region**: us-east-1" >> $GITHUB_STEP_SUMMARY
           echo "**Auto-Destroy**: ${{ github.event.inputs.auto_destroy }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Resources Created:" >> $GITHUB_STEP_SUMMARY
+          echo "### VPC Resources Created:" >> $GITHUB_STEP_SUMMARY
           
           aws cloudformation describe-stack-resources \
             --stack-name $STACK_NAME \
             --query 'StackResources[?ResourceType==`AWS::EC2::VPC` || ResourceType==`AWS::EC2::Subnet`].[LogicalResourceId,PhysicalResourceId]' \
             --output table >> $GITHUB_STEP_SUMMARY
 
+  deploy-website:
+    name: 🌐 Deploy NBA Draft Website
+    needs: demo-deploy
+    runs-on: ubuntu-latest
+    outputs:
+      website_stack_name: ${{ steps.deploy-website.outputs.website_stack_name }}
+      website_url: ${{ steps.get-outputs.outputs.website_url }}
+      cloudfront_url: ${{ steps.get-outputs.outputs.cloudfront_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy Website Stack
+        id: deploy-website
+        run: |
+          WEBSITE_STACK_NAME="nba-demo-website-${{ github.event.inputs.demo_name }}-$(date +%s)"
+          echo "website_stack_name=$WEBSITE_STACK_NAME" >> $GITHUB_OUTPUT
+          
+          echo "🌐 Deploying NBA Draft Map website: $WEBSITE_STACK_NAME"
+          
+          aws cloudformation deploy \
+            --stack-name $WEBSITE_STACK_NAME \
+            --template-file infrastructure/cloudformation/s3/nba-draft-website.yml \
+            --parameter-overrides EnvironmentName=demo \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --tags \
+              Project=nba-network-automation \
+              Environment=demo \
+              Purpose=resume-demonstration \
+              AutoDestroy=${{ github.event.inputs.auto_destroy }} \
+              CreatedAt=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+              ManagedBy=github-actions
+          
+          echo "✅ Website infrastructure deployed!"
+
+      - name: Get Website Stack Outputs
+        id: get-outputs
+        run: |
+          WEBSITE_STACK_NAME="${{ steps.deploy-website.outputs.website_stack_name }}"
+          
+          # Get outputs
+          WEBSITE_URL=$(aws cloudformation describe-stacks \
+            --stack-name $WEBSITE_STACK_NAME \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebsiteURL`].OutputValue' \
+            --output text)
+          
+          CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
+            --stack-name $WEBSITE_STACK_NAME \
+            --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
+            --output text)
+          
+          BUCKET_NAME=$(aws cloudformation describe-stacks \
+            --stack-name $WEBSITE_STACK_NAME \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebsiteBucket`].OutputValue' \
+            --output text)
+          
+          echo "website_url=$WEBSITE_URL" >> $GITHUB_OUTPUT
+          echo "cloudfront_url=$CLOUDFRONT_URL" >> $GITHUB_OUTPUT
+          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload Website Files
+        run: |
+          BUCKET_NAME="${{ steps.get-outputs.outputs.bucket_name }}"
+          
+          echo "📤 Uploading website files to S3 bucket: $BUCKET_NAME"
+          
+          aws s3 sync website/ s3://$BUCKET_NAME/ --region us-east-1 --delete
+          
+          echo "✅ Website files uploaded!"
+
+      - name: Display Website Information
+        run: |
+          echo "## 🌐 NBA Draft Map Website Ready!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Website Stack**: ${{ steps.deploy-website.outputs.website_stack_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**S3 Website URL**: ${{ steps.get-outputs.outputs.website_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**CloudFront URL (HTTPS)**: ${{ steps.get-outputs.outputs.cloudfront_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 **Access your interactive NBA Draft Map at**: ${{ steps.get-outputs.outputs.cloudfront_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ **Note**: CloudFront may take 15-20 minutes to fully deploy" >> $GITHUB_STEP_SUMMARY
+
   auto-destroy:
     name: ⏰ Auto-Destroy Timer
-    needs: demo-deploy
+    needs: [demo-deploy, deploy-website]
     if: github.event.inputs.auto_destroy == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Wait 30 minutes
         run: |
           echo "⏰ Waiting 30 minutes before auto-destroy..."
-          echo "Stack: ${{ needs.demo-deploy.outputs.stack_name }}"
+          echo "VPC Stack: ${{ needs.demo-deploy.outputs.stack_name }}"
+          echo "Website Stack: ${{ needs.deploy-website.outputs.website_stack_name }}"
           sleep 1800
 
       - name: Configure AWS Credentials
@@ -94,15 +184,57 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Destroy Demo Infrastructure
+      - name: Empty S3 Bucket
         run: |
-          STACK_NAME="${{ needs.demo-deploy.outputs.stack_name }}"
-          echo "🗑️ Auto-destroying demo infrastructure: $STACK_NAME"
+          WEBSITE_STACK_NAME="${{ needs.deploy-website.outputs.website_stack_name }}"
           
-          aws cloudformation delete-stack --stack-name $STACK_NAME
+          if [ -n "$WEBSITE_STACK_NAME" ]; then
+            echo "🧹 Emptying S3 bucket for website stack..."
+            
+            BUCKET_NAME=$(aws cloudformation describe-stack-resources \
+              --stack-name $WEBSITE_STACK_NAME \
+              --query 'StackResources[?ResourceType==`AWS::S3::Bucket`].PhysicalResourceId' \
+              --output text 2>/dev/null || echo "")
+            
+            if [ -n "$BUCKET_NAME" ]; then
+              echo "🗑️ Emptying bucket: $BUCKET_NAME"
+              aws s3 rm s3://$BUCKET_NAME/ --recursive || true
+            fi
+          fi
+
+      - name: Destroy Website Stack
+        run: |
+          WEBSITE_STACK_NAME="${{ needs.deploy-website.outputs.website_stack_name }}"
           
-          echo "⏳ Waiting for destruction..."
-          aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME || true
+          if [ -n "$WEBSITE_STACK_NAME" ]; then
+            echo "🗑️ Auto-destroying website stack: $WEBSITE_STACK_NAME"
+            
+            aws cloudformation delete-stack --stack-name $WEBSITE_STACK_NAME
+            
+            echo "⏳ Waiting for website stack destruction..."
+            aws cloudformation wait stack-delete-complete --stack-name $WEBSITE_STACK_NAME || true
+            
+            echo "✅ Website stack destroyed!"
+          fi
+
+      - name: Destroy VPC Stack
+        run: |
+          VPC_STACK_NAME="${{ needs.demo-deploy.outputs.stack_name }}"
+          echo "🗑️ Auto-destroying VPC stack: $VPC_STACK_NAME"
           
-          echo "✅ Demo infrastructure destroyed!"
-          echo "💰 Total cost: < $0.01"
+          aws cloudformation delete-stack --stack-name $VPC_STACK_NAME
+          
+          echo "⏳ Waiting for VPC stack destruction..."
+          aws cloudformation wait stack-delete-complete --stack-name $VPC_STACK_NAME || true
+          
+          echo "✅ VPC stack destroyed!"
+
+      - name: Cleanup Summary
+        run: |
+          echo "## 🗑️ Auto-Destruction Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Destroyed at**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "**VPC Stack**: ${{ needs.demo-deploy.outputs.stack_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Website Stack**: ${{ needs.deploy-website.outputs.website_stack_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💰 **Total demo cost**: < $0.02" >> $GITHUB_STEP_SUMMARY

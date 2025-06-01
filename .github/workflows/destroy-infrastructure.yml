@@ -229,24 +229,25 @@ jobs:
 
       - name: Empty S3 Bucket
         run: |
-          WEBSITE_STACK="nba-arena-website-${{ github.event.inputs.environment }}"
+          WEBSITE_STACK="nba-draft-website-${{ github.event.inputs.environment }}"
           echo "🗑️ Checking for website stack: $WEBSITE_STACK"
           
           if aws cloudformation describe-stacks --stack-name $WEBSITE_STACK 2>/dev/null; then
-            BUCKET_NAME=$(aws cloudformation describe-stacks \
+            # Get bucket name from stack resources
+            BUCKET_NAME=$(aws cloudformation describe-stack-resources \
               --stack-name $WEBSITE_STACK \
-              --query 'Stacks[0].Outputs[?OutputKey==`WebsiteBucket`].OutputValue' \
+              --query 'StackResources[?ResourceType==`AWS::S3::Bucket`].PhysicalResourceId' \
               --output text)
             
             if [ -n "$BUCKET_NAME" ]; then
               echo "🧹 Emptying S3 bucket: $BUCKET_NAME"
-              aws s3 rm s3://$BUCKET_NAME --recursive || true
+              aws s3 rm s3://$BUCKET_NAME/ --recursive || true
             fi
           fi
 
       - name: Delete Website Stack
         run: |
-          WEBSITE_STACK="nba-arena-website-${{ github.event.inputs.environment }}"
+          WEBSITE_STACK="nba-draft-website-${{ github.event.inputs.environment }}"
           
           if aws cloudformation describe-stacks --stack-name $WEBSITE_STACK 2>/dev/null; then
             echo "🗑️ Deleting website stack: $WEBSITE_STACK"
