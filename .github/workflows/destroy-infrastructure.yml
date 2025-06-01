@@ -229,7 +229,7 @@ jobs:
 
       - name: Empty S3 Bucket
         run: |
-          WEBSITE_STACK="nba-draft-website-${{ github.event.inputs.environment }}"
+          WEBSITE_STACK="nba-arena-website-${{ github.event.inputs.environment }}"
           echo "🗑️ Checking for website stack: $WEBSITE_STACK"
           
           if aws cloudformation describe-stacks --stack-name $WEBSITE_STACK 2>/dev/null; then
@@ -247,7 +247,7 @@ jobs:
 
       - name: Delete Website Stack
         run: |
-          WEBSITE_STACK="nba-draft-website-${{ github.event.inputs.environment }}"
+          WEBSITE_STACK="nba-arena-website-${{ github.event.inputs.environment }}"
           
           if aws cloudformation describe-stacks --stack-name $WEBSITE_STACK 2>/dev/null; then
             echo "🗑️ Deleting website stack: $WEBSITE_STACK"
